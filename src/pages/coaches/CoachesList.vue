@@ -6,10 +6,13 @@
     <section>
       <base-card>
         <div class="controls">
-          <base-button mode="outline">Refresh</base-button>
-          <base-button link to="/register" v-if="!isCoach"
+          <base-button mode="outline" @click="loadCoaches">Refresh</base-button>
+          <base-button v-if="!isCoach" link to="/register"
             >Register as Coach</base-button
           >
+        </div>
+        <div v-if="isLoading">
+          <base-spinner></base-spinner>
         </div>
         <ul v-if="hasCoaches">
           <coach-item
@@ -29,16 +32,19 @@
 </template>
 
 <script>
-import CoachFilter from '../../components/coaches/CoachFilter.vue';
 import CoachItem from '../../components/coaches/CoachItem.vue';
+import CoachFilter from '../../components/coaches/CoachFilter.vue';
+import BaseSpinner from '../../components/ui/BaseSpinner.vue';
 
 export default {
   components: {
     CoachItem,
     CoachFilter,
+    BaseSpinner,
   },
   data() {
     return {
+      isLoading: false,
       activeFilters: {
         frontend: true,
         backend: true,
@@ -66,12 +72,20 @@ export default {
       });
     },
     hasCoaches() {
-      return this.$store.getters['coaches/hasCoaches'];
+      return !this.isLoading && this.$store.getters['coaches/hasCoaches'];
     },
   },
+  created() {
+    this.loadCoaches();
+  },
   methods: {
-    setFilters(updateFilters) {
-      this.activeFilters = updateFilters;
+    setFilters(updatedFilters) {
+      this.activeFilters = updatedFilters;
+    },
+    async loadCoaches() {
+      this.isLoading = true;
+      await this.$store.dispatch('coaches/loadCoaches');
+      this.isLoading = false;
     },
   },
 };
